@@ -23,13 +23,11 @@ AuthController.performAuth = (authCode, res) => {
 
   request.get(authURL).then(body => {
     const _body = JSON.parse(body);
-    console.log(_body);
+
     const team = {
       access_token: _body.access_token,
       name: _body.team_name,
       ID: _body.team_id,
-      bot_id: _body.bot.bot_user_id,
-      bot_token: _body.bot.bot_access_token
     };
 
     return AuthController.registerTeam(team, res);
@@ -41,7 +39,6 @@ AuthController.performAuth = (authCode, res) => {
 
 AuthController.registerTeam = (team, res) => {
   return TeamDao.findById(team.ID).then(teams => {
-    console.log(teams);
     if (teams.length <= 0 && !teams[0]) {
       TeamDao.create(team)
         .then(() => res.redirect('/'))
@@ -53,8 +50,6 @@ AuthController.registerTeam = (team, res) => {
       TeamDao.update(team.ID, {
         name: teams[0].name,
         access_token: teams[0].access_token,
-        bot_id: teams[0].bot_id,
-        bot_token: teams[0].bot_token
       })
         .then(() => res.redirect('/'))
         .catch(err => {
