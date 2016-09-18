@@ -8,9 +8,6 @@ const EventController = {};
 EventController.handleEvent = (req, res) => {
   const type = req.body.type || '';
 
-  console.log('handling event');
-  console.log('RETRY REASON: ', req.headers["X-Slack-Retry-Reason"]);
-
   if (type === 'url_verification') {
     return res.status(200).json({
       challenge: req.body.challenge,
