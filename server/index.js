@@ -17,6 +17,7 @@ app.use(Express.static('public'));
 //Error handling
 app.use(function(err, req, res, next) {
   console.error(err.stack);
+  res.setHeader('X-Slack-No-Retry', 1);
   res.status(500).send('Something broke!');
 });
 

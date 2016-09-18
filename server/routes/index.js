@@ -7,8 +7,8 @@ const AuthController = require('../controllers/AuthController');
 const EventController = require('../controllers/EventController');
 
 router.get('/ping', (req, res) => res.send('pong'));
-router.get('/action', ActionController.handleAction);
 router.get('/auth-team', AuthController.authTeam);
-router.post('/event', middleware.verifySlack, middleware.fetchTeamFromId, EventController.handleEvent);
+router.post('/action', middleware.parseAction, middleware.verifySlack, middleware.fetchTeamFromAction, ActionController.handleAction);
+router.post('/event', middleware.verifySlack, middleware.fetchTeamFromEvent, EventController.handleEvent);
 
 module.exports = router;

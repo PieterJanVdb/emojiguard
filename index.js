@@ -1,14 +1,16 @@
 require('dotenv').load();
 
 const app = require('./server');
-const EmojiHandler = require('./server/events/EmojiHandler');
+const EventHandler = require('./server/jobhandlers/EventHandler');
+const ActionHandler = require('./server/jobhandlers/ActionHandler');
 
 const port = process.env.PORT || 8000;
 
 global.rootPath = __dirname;
 
-// Init jobqueue listener
-EmojiHandler.init();
+// Init jobqueue listeners
+EventHandler.init();
+ActionHandler.init();
 
 // Start server
 app.listen(port, () => console.log(`Listening on port ${port}`));

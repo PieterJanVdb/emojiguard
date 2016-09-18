@@ -1,12 +1,15 @@
 const Queue = require('bull');
 const _ = require('lodash');
 
-const emojiQueue = Queue('process_emoji_event', 6379, '127.0.0.1');
+const emojiQueue = Queue('process_emoji_event', process.env.REDIS_PORT, '127.0.0.1');
 
 const EventController = {};
 
 EventController.handleEvent = (req, res) => {
-  const type = !_.isNil(req.body.type) ? req.body.type : '';
+  const type = req.body.type || '';
+
+  console.log('handling event');
+  console.log('RETRY REASON: ', req.headers["X-Slack-Retry-Reason"]);
 
   if (type === 'url_verification') {
     return res.status(200).json({
@@ -14,9 +17,10 @@ EventController.handleEvent = (req, res) => {
     });
   } else if (type === 'event_callback') {
     const eventType = req.body.event.type;
-    const subType = req.body.event.subtype;
 
     if (eventType === 'emoji_changed') {
+      const subType = req.body.event.subtype;
+
       if (subType === 'add') {
         emojiQueue.add({
           type: 'add',
