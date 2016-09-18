@@ -3,6 +3,10 @@ const fs = require('fs-promise');
 const glob = require('glob-promise');
 const request = require('request-promise');
 const moment = require('moment');
+const bluebird = require('bluebird');
+const PythonShell = require('python-shell');
+
+const runPythonScript = bluebird.promisify(PythonShell.run);
 
 const emojiQueue = Queue('process_emoji_action', process.env.REDIS_PORT, '127.0.0.1');
 
@@ -29,7 +33,64 @@ ActionHandler.init = () => {
 
 function addEmoji(action) {
   return new Promise((resolve, reject) => {
-    
+    if (!action.value || !action.channel || !action.team || !action.message || !action.message_ts) reject('action object incomplete');
+
+    request('https://slack.com/api/emoji.list', {
+      json: true,
+      qs: { token: action.team.access_token }
+    }).then(response => {
+      let emojis;
+
+      try {
+        emojis = Object.keys(reponse.emoji);
+      } catch (exc) {
+        emojis = [];
+      }
+
+      if (emojis.find(emoji => emoji === action.value.split('-')[0])) {
+        const message = createMessage(action.message, 'The emoji already exists.', 'danger');
+        const options = createOptions(action.team, action.channel, message, action.message_ts);
+
+        request(options)
+          .then(() => resolve())
+          .catch(err => reject(err));
+      } else {
+        const path = `${global.rootPath}/emojis/${action.team.ID}/${action.value}.*`;
+        const name = action.value.split('-')[0];
+
+        glob(path)
+          .then(contents => {
+            if (!contents.length) {
+              const message = createMessage(action.message, 'The emoji could not be found on the server.', 'danger');
+              return createOptions(action.team, action.channel, message, action.message_ts);
+            }
+
+            const pythonOptions = {
+              pythonPath: 'C:/Python27/python.exe',
+              scriptPath: `${global.rootPath}/scripts/slack-emojinator`,
+              args: [contents[0], name]
+            }
+
+            if (process.env.NODE_ENV === 'production') delete pythonOptions.pythonPath;
+
+            return runPythonScript('upload.py', pythonOptions)
+              .then(() => {
+                return fs.remove(contents[0])
+                  .then(() => {
+                    const message = createMessage(action.message, 'Successfully added emoji to Slack.', 'good');
+                    return createOptions(action.team, action.channel, message, action.message_ts);
+                  });
+              })
+              .catch(err => {
+                const message = createMessage(action.message, 'Failed adding emoji to Slack.', 'danger');
+                return createOptions(action.team, action.channel, message, action.message_ts);
+              });
+          })
+          .then(request)
+          .then(() => resolve())
+          .catch(err => reject(err));
+      }
+    });
   });
 }
 
