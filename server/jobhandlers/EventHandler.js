@@ -62,18 +62,6 @@ function processRemoved(emoji) {
   return new Promise((resolve, reject) => {
     if (!emoji.name || !emoji.team) reject('emoji object incomplete');
 
-    const notFoundPayload = {
-      "token": emoji.team.access_token,
-      "channel": process.env.CHANNEL,
-      "text": `Sadly, the emoji *${emoji.name} could not be found.`
-    };
-
-    const notFoundOptions = {
-      method: 'POST',
-      uri: 'https://slack.com/api/chat.postMessage',
-      formData: notFoundPayload
-    };
-
     const globPath = `${global.rootPath}/emojis/${emoji.team.ID}/${emoji.name}-*.*`;
 
     glob(globPath)
@@ -134,7 +122,7 @@ function createOptions(team, message, name, notFound) {
     options = Object.assign({ formData: payload }, baseOptions);
   } else {
     const payload = Object.assign({
-      "text": `Sadly, the emoji *${name}* could not be found.`
+      "text": `The emoji *${name}* has been deleted. Sadly it was not found on the server.`
     }, basePayload);
 
     options = Object.assign({ formData: payload }, baseOptions);
