@@ -66,12 +66,9 @@ function addEmoji(action) {
             }
 
             const pythonOptions = {
-              pythonPath: 'C:/Python27/python.exe',
               scriptPath: `${global.rootPath}/scripts/slack-emojinator`,
               args: [contents[0], name]
             }
-
-            if (process.env.NODE_ENV === 'production') delete pythonOptions.pythonPath;
 
             return runPythonScript('upload.py', pythonOptions)
               .then(() => {
